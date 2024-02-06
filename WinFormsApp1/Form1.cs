@@ -1,23 +1,19 @@
 using Newtonsoft.Json;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Windows.Forms;
 using WinFormsApp1.Properties;
-using static WinFormsApp1.Form1;
 using Timer = System.Windows.Forms.Timer;
 
 namespace WinFormsApp1
 {
     public partial class Form1 : Form
     {
-        private static int Restart_Hour = 4;
-        private static int Restart_Minute = 0;
-        // private static string Log_File = "server_watchdog.log";
         private int counter;
         private bool isTimerRunning = false;
         private bool UpdateCheck = false;
         private bool Forcenextrun = false;
         private bool is_server_running;
+        private DebugForm debugForm;
+
 
         Dictionary<string, Timer> tabTimers = new Dictionary<string, Timer>();
         private Dictionary<string, Timer> timers = new Dictionary<string, Timer>();
@@ -27,6 +23,7 @@ namespace WinFormsApp1
         public Form1()
         {
             InitializeComponent();
+            debugForm = new DebugForm();
             this.Icon = new Icon("icon.ico");
             this.Text = "Game Server Manager";
             this.Load += new System.EventHandler(this.Form1_Load);
@@ -53,6 +50,8 @@ namespace WinFormsApp1
 
         private void Form1_Load(object? sender, EventArgs e)
         {
+            //debugForm.Show();
+
             var gameConfigs = GameConfigManager.LoadAllGameConfigs();
 
             foreach (var config in gameConfigs)
@@ -108,7 +107,7 @@ namespace WinFormsApp1
                         timer.Dispose(); // Dispose of the timer
                         timers.Remove(config.GameID); // Remove it from the dictionary
 
-                        Log($"Stopping main loop for game {config.GameID}");
+                        LogToTab(config.GameID, $"Stopping main loop for game {config.GameID}");
                         isTimerRunning = false;
                         is_server_running = false;
                         Forcenextrun = false;
@@ -123,7 +122,7 @@ namespace WinFormsApp1
             {
                 if (string.IsNullOrEmpty(gameID))
                 {
-                    Log("No game tab selected or game configuration missing.");
+                    LogToTab(gameID, "No game tab selected or game configuration missing.");
                     return;
                 }
 
@@ -140,13 +139,14 @@ namespace WinFormsApp1
                     UpdateCountdown(gameID);
                 }
             }
+            //debugForm?.AppendDebugInfo($"Timer1_Tick for {gameID} executed at {DateTime.Now}");
         }
 
         private void CheckAndUpdateServer(string gameID)
         {
             if (IsServerUpdateNeeded())
             {
-                PerformServerUpdate();
+                PerformServerUpdate(gameID);
             }
             else
             {
@@ -159,10 +159,10 @@ namespace WinFormsApp1
             return !IsServerRunning() && !UpdateCheck && !Forcenextrun;
         }
 
-        private void PerformServerUpdate()
+        private void PerformServerUpdate(string gameID)
         {
-            Log("Server is not running, doing steamcmd stuff");
-            UpdateServer(); // Check and update server when needed
+            LogToTab(gameID, "Server is not running, doing steamcmd stuff");
+            UpdateServer(gameID); // Check and update server when needed
         }
 
         private void LogServerStatus(string gameID)
@@ -173,33 +173,33 @@ namespace WinFormsApp1
             }
 
             if (IsTimeToRestart())
-            { 
-                ShutdownServer(); 
+            {
+                ShutdownServer(gameID);
             }
 
             if (IsServerRunning())
             {
-                Log("Server is currently running.");
+                LogToTab(gameID, "Server is currently running.");
             }
             else if (!UpdateCheck && !Forcenextrun)
             {
-                Log("Server update check is in progress.");
+                LogToTab(gameID, "Server update check is in progress.");
                 CheckAndUpdateServer(gameID);
             }
             else if (Forcenextrun && !UpdateCheck)
             {
-                StartServer();
+                StartServer(gameID);
             }
             else
             {
-                Log("Nothing found to do, repeating loop.");
+                LogToTab(gameID, "Nothing found to do, repeating loop.");
             }
         }
 
 
         private void StartServerWatchdog(TabPage tabPage, string gameID)
         {
-            Log($"Starting main loop for game: {gameID}");
+            LogToTab(gameID, $"Starting main loop for game: {gameID}");
 
             // Check if a timer already exists for this gameID and stop it if it does
             if (timers.TryGetValue(gameID, out var existingTimer))
@@ -272,11 +272,11 @@ namespace WinFormsApp1
             return false; // Return false or handle appropriately if no tab is selected or no config is found
         }
 
-        private void UpdateServer()
+        private void UpdateServer(string gameID)
         {
             if (gamesTabControl.SelectedTab?.Tag is GameConfig config && !UpdateCheck)
             {
-                Log("Checking for server update...");
+                LogToTab(config.GameID, "Checking for server update...");
 
                 Task.Run(() =>
                 {
@@ -305,7 +305,7 @@ namespace WinFormsApp1
                     {
                         this.Invoke((MethodInvoker)delegate
                         {
-                            Log("Failed to start the update process.");
+                            LogToTab(config.GameID, "Failed to start the update process.");
                         });
                         UpdateCheck = false; // Reset the flag if the process couldn't start
                     }
@@ -313,16 +313,16 @@ namespace WinFormsApp1
             }
             else if (UpdateCheck)
             {
-                Log("An update is already in progress.");
+                LogToTab(gameID, "An update is already in progress.");
             }
             else
             {
-                Log("No game tab selected or game configuration missing.");
+                LogToTab(gameID, "No game tab selected or game configuration missing.");
             }
         }
 
 
-        private void StartServer()
+        private void StartServer(string gameID)
         {
             if (gamesTabControl.SelectedTab?.Tag is GameConfig config)
             {
@@ -339,68 +339,76 @@ namespace WinFormsApp1
                     {
                         if (process == null)
                         {
-                            Log("Failed to start the server process.");
+                            LogToTab(config.GameID, "Failed to start the server process.");
+                        }
+                        else
+                        {
+                            // The process has started, but you might want to wait for the server to be ready.
+                            // Consider implementing a check to confirm the server is fully operational.
+                            LogToTab(config.GameID, "Server process started successfully.");
+                            UpdateCheck = false;  // Set UpdateCheck to false as the server has started
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Log($"Failed to start server: {ex.Message}");
+                    LogToTab(config.GameID, $"Failed to start server: {ex.Message}");
                 }
             }
             else
             {
-                Log("No game tab selected or game configuration missing.");
+                LogToTab(gameID, "No game tab selected or game configuration missing.");
             }
         }
-        private void ShutdownServer()
+
+        private void ShutdownServer(string gameID)
         {
             if (gamesTabControl.SelectedTab?.Tag is GameConfig config)
             {
                 string processName = Path.GetFileNameWithoutExtension(config.ServerExecutableFilename);
 
-                Log($"Attempting to shut down {processName}...");
+                LogToTab(config.GameID, $"Attempting to shut down {processName}...");
 
                 foreach (var process in Process.GetProcessesByName(processName))
                 {
                     try
                     {
                         process.Kill();
-                        Log($"Shut down process {processName}.");
+                        LogToTab(config.GameID, $"Shut down process {processName}.");
                     }
                     catch (Exception ex)
                     {
-                        Log($"Failed to shut down process {processName}: {ex.Message}");
+                        LogToTab(config.GameID, $"Failed to shut down process {processName}: {ex.Message}");
                     }
                 }
 
-                Log("Waiting 60 secs to stop repeating shutdown.");
+                LogToTab(config.GameID, "Waiting 60 secs to stop repeating shutdown.");
                 Thread.Sleep(60000); // 60 seconds
             }
             else
             {
-                Log("No game tab selected or game configuration missing.");
+                LogToTab(gameID, "No game tab selected or game configuration missing.");
             }
         }
 
-
-        private void Log(string message)
+        private void LogToTab(string gameID, string message)
         {
-            // Ensure the method is run in the UI thread
-            if (InvokeRequired)
+            string tabPageName = $"tabPage{gameID}";
+            var tabPage = gamesTabControl.Controls.Find(tabPageName, true).FirstOrDefault() as TabPage;
+            if (tabPage != null)
             {
-                Invoke(new Action<string>(Log), message);
-                return;
+                var logRichTextBox = tabPage.Controls[$"logRichTextBox{gameID}"] as RichTextBox;
+                if (logRichTextBox != null)
+                {
+                    if (logRichTextBox.InvokeRequired)
+                    {
+                        logRichTextBox.Invoke(new Action(() => LogToTab(gameID, message)));
+                        return;
+                    }
+                    logRichTextBox.AppendText($"{DateTime.Now:dd-MM-yyy HH:mm:ss} {message}\n");
+                    logRichTextBox.ScrollToCaret();
+                }
             }
-
-            string timestamp = DateTime.Now.ToString("dd-MM-yyy HH:mm:ss");
-            string fullMessage = $"[{timestamp}] {message}\n";
-
-            richTextBoxLog.AppendText(fullMessage); // Append the text
-
-            // Auto-scroll to the bottom of the RichTextBox
-            richTextBoxLog.SelectionStart = richTextBoxLog.Text.Length;
-            richTextBoxLog.ScrollToCaret();
         }
 
         private void Settings_Button_Click(object sender, EventArgs e)
@@ -495,7 +503,7 @@ namespace WinFormsApp1
             var deleteButton = new Button
             {
                 Text = "Delete Tab",
-                Location = new Point(300, 190), // Set location as needed
+                Location = new Point(300, 310), // Set location as needed
                 Size = new Size(50, 20) // Set size as needed
             };
 
@@ -508,8 +516,8 @@ namespace WinFormsApp1
             {
                 Text = "Start Button",
                 Name = $"StartButton{config.GameID}", // Unique name for each button
-                Location = new Point(300, 10), // Set location as needed
-                Size = new Size(50, 20) // Set size as needed
+                Location = new Point(60, 9), // Set location as needed
+                Size = new Size(50, 25) // Set size as needed
             };
 
             Start_Button.Click += Start_Button_Click; // Assign the event handler
@@ -520,7 +528,7 @@ namespace WinFormsApp1
             var TabSettings = new Button
             {
                 Text = "Settings",
-                Location = new Point(290, 40), // Set location as needed
+                Location = new Point(290, 10), // Set location as needed
                 Size = new Size(60, 25) // Set size as needed
             };
 
@@ -540,6 +548,17 @@ namespace WinFormsApp1
             };
 
             tabPage.Controls.Add(Countdown);
+
+            //Log box
+            var logRichTextBox = new RichTextBox
+            {
+                Name = $"logRichTextBox{config.GameID}",
+                ReadOnly = true,
+                Location = new Point(10, 45),
+                Size = new Size(320, 260), //Lenght, Heeght
+                Multiline = true
+            };
+            tabPage.Controls.Add(logRichTextBox);
 
             //Leave at end
             gamesTabControl.TabPages.Add(tabPage);
@@ -699,8 +718,8 @@ namespace WinFormsApp1
 
         //private bool AreAllServersRunning()
         //{
-            // Implement logic to determine if all servers or tasks are currently running
-            // Return true if all are running; otherwise, false
+        // Implement logic to determine if all servers or tasks are currently running
+        // Return true if all are running; otherwise, false
         //}
 
         private void StartAllServers()

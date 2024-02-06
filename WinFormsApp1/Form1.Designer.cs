@@ -30,7 +30,6 @@
         {
             components = new System.ComponentModel.Container();
             Timer1 = new System.Windows.Forms.Timer(components);
-            richTextBoxLog = new RichTextBox();
             SettingsButton = new Button();
             gamesTabControl = new TabControl();
             AddGame = new Button();
@@ -40,15 +39,6 @@
             // Timer1
             // 
             Timer1.Interval = 1000;
-            // 
-            // richTextBoxLog
-            // 
-            richTextBoxLog.Location = new Point(12, 288);
-            richTextBoxLog.Name = "richTextBoxLog";
-            richTextBoxLog.ReadOnly = true;
-            richTextBoxLog.Size = new Size(364, 115);
-            richTextBoxLog.TabIndex = 1;
-            richTextBoxLog.Text = "";
             // 
             // SettingsButton
             // 
@@ -65,7 +55,7 @@
             gamesTabControl.Location = new Point(12, 41);
             gamesTabControl.Name = "gamesTabControl";
             gamesTabControl.SelectedIndex = 0;
-            gamesTabControl.Size = new Size(364, 241);
+            gamesTabControl.Size = new Size(364, 362);
             gamesTabControl.TabIndex = 5;
             // 
             // AddGame
@@ -97,7 +87,6 @@
             Controls.Add(AddGame);
             Controls.Add(gamesTabControl);
             Controls.Add(SettingsButton);
-            Controls.Add(richTextBoxLog);
             FormBorderStyle = FormBorderStyle.Fixed3D;
             Name = "Form1";
             Text = "Form1";
@@ -106,7 +95,6 @@
 
         #endregion
         private System.Windows.Forms.Timer Timer1;
-        private RichTextBox richTextBoxLog;
         private Button SettingsButton;
         private TabControl gamesTabControl;
         private Button AddGame;
