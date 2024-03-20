@@ -1,4 +1,4 @@
-﻿namespace WinFormsApp1
+﻿namespace GameServerManager
 {
     partial class DebugForm
     {

@@ -1,6 +1,6 @@
-﻿using static WinFormsApp1.Form1;
+﻿using static GameServerManager.Form1;
 
-namespace WinFormsApp1
+namespace GameServerManager
 {
     public partial class AddGame : Form
     {
@@ -26,7 +26,10 @@ namespace WinFormsApp1
                 ServerDirectory = "DefaultServerDirectory", // Set a default server directory
                 ExecutableDir = "DefaultExecutableDir", // Set a default executable directory
                 ExtraArgs = "DefaultExtraArgs", // Set default extra arguments
-                Countdown = 60 // Set a default countdown value (integer)
+                Countdown = 60, // Set a default countdown value (integer)
+                rconIP = "",
+                rconPort = "",
+                rconPassword = ""
             };
         }
 

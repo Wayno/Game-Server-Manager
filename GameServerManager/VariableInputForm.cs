@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Windows.Forms;
-using WinFormsApp1.Properties;
+using GameServerManager.Properties;
 
-namespace WinFormsApp1
+namespace GameServerManager
 {
     public partial class VariableInputForm : Form
     {

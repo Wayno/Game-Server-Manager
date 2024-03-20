@@ -1,4 +1,4 @@
-﻿namespace WinFormsApp1
+﻿namespace GameServerManager
 {
     partial class Form1
     {
@@ -42,7 +42,7 @@
             // 
             // SettingsButton
             // 
-            SettingsButton.Location = new Point(297, 12);
+            SettingsButton.Location = new Point(452, 12);
             SettingsButton.Name = "SettingsButton";
             SettingsButton.Size = new Size(75, 23);
             SettingsButton.TabIndex = 4;
@@ -55,7 +55,7 @@
             gamesTabControl.Location = new Point(12, 41);
             gamesTabControl.Name = "gamesTabControl";
             gamesTabControl.SelectedIndex = 0;
-            gamesTabControl.Size = new Size(364, 362);
+            gamesTabControl.Size = new Size(515, 362);
             gamesTabControl.TabIndex = 5;
             // 
             // AddGame
@@ -74,7 +74,7 @@
             StartStopAllButton.Name = "StartStopAllButton";
             StartStopAllButton.Size = new Size(75, 23);
             StartStopAllButton.TabIndex = 7;
-            StartStopAllButton.Text = "Start";
+            StartStopAllButton.Text = "Start All";
             StartStopAllButton.UseVisualStyleBackColor = true;
             StartStopAllButton.Click += StartStopAll_Click;
             // 
@@ -82,7 +82,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(382, 415);
+            ClientSize = new Size(539, 415);
             Controls.Add(StartStopAllButton);
             Controls.Add(AddGame);
             Controls.Add(gamesTabControl);
