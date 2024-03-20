@@ -47,8 +47,8 @@
             TabNameTextBox = new TextBox();
             TabName = new Label();
             label1 = new Label();
-            comboBox1 = new ComboBox();
-            comboBox2 = new ComboBox();
+            hoursComboBox = new ComboBox();
+            minutesComboBox = new ComboBox();
             label7 = new Label();
             label8 = new Label();
             TextBoxIP = new TextBox();
@@ -226,21 +226,21 @@
             label1.Size = new Size(573, 1);
             label1.TabIndex = 53;
             // 
-            // comboBox1
+            // hoursComboBox
             // 
-            comboBox1.FormattingEnabled = true;
-            comboBox1.Location = new Point(11, 389);
-            comboBox1.Name = "comboBox1";
-            comboBox1.Size = new Size(121, 23);
-            comboBox1.TabIndex = 54;
+            hoursComboBox.FormattingEnabled = true;
+            hoursComboBox.Location = new Point(11, 389);
+            hoursComboBox.Name = "hoursComboBox";
+            hoursComboBox.Size = new Size(121, 23);
+            hoursComboBox.TabIndex = 54;
             // 
-            // comboBox2
+            // minutesComboBox
             // 
-            comboBox2.FormattingEnabled = true;
-            comboBox2.Location = new Point(138, 389);
-            comboBox2.Name = "comboBox2";
-            comboBox2.Size = new Size(121, 23);
-            comboBox2.TabIndex = 55;
+            minutesComboBox.FormattingEnabled = true;
+            minutesComboBox.Location = new Point(138, 389);
+            minutesComboBox.Name = "minutesComboBox";
+            minutesComboBox.Size = new Size(121, 23);
+            minutesComboBox.TabIndex = 55;
             // 
             // label7
             // 
@@ -374,8 +374,8 @@
             Controls.Add(TextBoxIP);
             Controls.Add(label8);
             Controls.Add(label7);
-            Controls.Add(comboBox2);
-            Controls.Add(comboBox1);
+            Controls.Add(minutesComboBox);
+            Controls.Add(hoursComboBox);
             Controls.Add(label1);
             Controls.Add(TabNameTextBox);
             Controls.Add(TabName);
@@ -423,8 +423,8 @@
         private TextBox TabNameTextBox;
         private Label TabName;
         private Label label1;
-        private ComboBox comboBox1;
-        private ComboBox comboBox2;
+        private ComboBox hoursComboBox;
+        private ComboBox minutesComboBox;
         private Label label7;
         private Label label8;
         private TextBox TextBoxIP;

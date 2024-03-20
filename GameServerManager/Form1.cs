@@ -604,7 +604,6 @@ namespace GameServerManager
             public int RestartHour { get; set; }
             public int RestartMinute { get; set; }
             public bool AutoRestartEnabled { get; set; }
-
         }
 
         public class GameConfigManager

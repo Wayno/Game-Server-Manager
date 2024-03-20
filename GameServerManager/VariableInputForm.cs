@@ -12,11 +12,10 @@ namespace GameServerManager
         {
             InitializeComponent();
             this.Text = "Settings";
+            this.Icon = new Icon("icon.ico");
             this.Load += new System.EventHandler(this.VariableInputForm_Load);
             this.FormClosing += new FormClosingEventHandler(VariableInputForm_FormClosing);
             this.parentForm = parent;
-            PopulateHours();
-            PopulateMinutes();
 
             // Populate hours
             for (int i = 0; i < 24; i++)

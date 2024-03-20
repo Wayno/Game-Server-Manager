@@ -11,6 +11,7 @@ namespace GameServerManager
         {
             InitializeComponent();
             this.Text = "Add Game";
+            this.Icon = new Icon("icon.ico");
             //this.Load += new System.EventHandler(this.AddGame_Load);
             this.currentGameConfig = config;
             this.FormClosing += new FormClosingEventHandler(AddGame_FormClosing);
@@ -29,7 +30,8 @@ namespace GameServerManager
                 Countdown = 60, // Set a default countdown value (integer)
                 rconIP = "",
                 rconPort = "",
-                rconPassword = ""
+                rconPassword = "",
+                AutoRestartEnabled = false
             };
         }
 

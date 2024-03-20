@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Windows.Forms;
 using System.Runtime.CompilerServices;
+using GameServerManager.Properties;
 
 namespace GameServerManager
 {
@@ -17,8 +18,21 @@ namespace GameServerManager
         {
             InitializeComponent();
             this.gameID = gameID;
+            this.Icon = new Icon("icon.ico");
             MaskedTextBoxPasssword.UseSystemPasswordChar = true;
             btnShowPassword.Text = "Show"; // Initial text
+
+            // Populate hours
+            for (int i = 0; i < 24; i++)
+            {
+                hoursComboBox.Items.Add(i.ToString("D2"));
+            }
+
+            // Populate minutes
+            for (int i = 0; i < 60; i++)
+            {
+                minutesComboBox.Items.Add(i.ToString("D2"));
+            }
         }
 
         private void TabSettingsForm_Load(object sender, EventArgs e)
@@ -50,6 +64,13 @@ namespace GameServerManager
                     TextBoxPort.Text = currentGameConfig.rconPort;
                     MaskedTextBoxPasssword.Text = decryptedPassword;
                     autoRestartCheckBox.Checked = currentGameConfig.AutoRestartEnabled;
+
+                    string selectedHour = currentGameConfig.RestartHour.ToString("D2");
+                    string selectedMinute = currentGameConfig.RestartMinute.ToString("D2");
+
+                    // Set the selected items in the ComboBoxes
+                    hoursComboBox.SelectedItem = selectedHour;
+                    minutesComboBox.SelectedItem = selectedMinute;
                 }
             }
         }
@@ -69,6 +90,9 @@ namespace GameServerManager
             string decryptedPassword = EncryptionHelper.DecryptString(encryptionKey, config.rconPassword);
             MaskedTextBoxPasssword.Text = decryptedPassword;
             autoRestartCheckBox.Checked = config.AutoRestartEnabled;
+            minutesComboBox.Text = config.RestartMinute.ToString("D2");
+            hoursComboBox.Text = config.RestartHour.ToString("D2");
+
 
         }
 
@@ -85,9 +109,13 @@ namespace GameServerManager
             string rconPort = TextBoxPort.Text;
             string encryptedPassword = EncryptionHelper.EncryptString(encryptionKey, MaskedTextBoxPasssword.Text);
             bool autorestartCheckBox = autoRestartCheckBox.Checked;
+            string minutes = minutesComboBox.Text;
+            string hours = hoursComboBox.Text;
 
 
-            if (int.TryParse(countdownText, out int countdownValue))
+            if (int.TryParse(countdownText, out int countdownValue) && 
+                int.TryParse(minutesComboBox.Text, out int minutesValue) &&
+                int.TryParse(hoursComboBox.Text, out int hoursValue))
             {
                 // Load existing configurations
                 List<GameConfig> gameConfigs = GameConfigManager.LoadAllGameConfigs();
@@ -109,6 +137,8 @@ namespace GameServerManager
                     existingConfig.Countdown = countdownValue;
                     existingConfig.rconPassword = encryptedPassword;
                     existingConfig.AutoRestartEnabled = autoRestartCheckBox.Checked;
+                    existingConfig.RestartHour = hoursValue;
+                    existingConfig.RestartMinute = minutesValue;
                 }
                 else
                 {
@@ -125,8 +155,10 @@ namespace GameServerManager
                         rconIP = rconIP,
                         rconPort = rconPort,
                         rconPassword = encryptedPassword,
-                        AutoRestartEnabled = autoRestartCheckBox.Checked
-                };
+                        AutoRestartEnabled = autoRestartCheckBox.Checked,
+                        RestartMinute = minutesValue,
+                        RestartHour = hoursValue
+                    };
 
                     // Add the new configuration to the list
                     gameConfigs.Add(newConfig);
@@ -227,6 +259,24 @@ namespace GameServerManager
             {
                 // If password is visible, show an "eye-slash" icon or relevant text
                 btnShowPassword.Text = "Hide"; // or set an "eye" icon
+            }
+        }
+
+        private void PopulateHours()
+        {
+            hoursComboBox.Items.Clear();
+            for (int hour = 0; hour < 24; hour++)
+            {
+                hoursComboBox.Items.Add(hour.ToString("D2")); // Formats the hour as a two-digit number
+            }
+        }
+
+        private void PopulateMinutes()
+        {
+            minutesComboBox.Items.Clear();
+            for (int minute = 0; minute < 60; minute++)
+            {
+                minutesComboBox.Items.Add(minute.ToString("D2")); // Formats the minute as a two-digit number
             }
         }
     }
