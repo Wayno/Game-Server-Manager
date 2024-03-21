@@ -31,7 +31,9 @@ namespace GameServerManager
                 rconIP = "",
                 rconPort = "",
                 rconPassword = "",
-                AutoRestartEnabled = false
+                AutoRestartEnabled = false,
+                RestartHour = 30,
+                RestartMinute = 30
             };
         }
 

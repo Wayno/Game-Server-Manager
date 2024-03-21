@@ -21,6 +21,7 @@ namespace GameServerManager
         private Dictionary<string, int> tabCountdowns = new Dictionary<string, int>();
         private Dictionary<string, GameConfig> gameConfigs = new Dictionary<string, GameConfig>();
         private Dictionary<string, bool> timerRunningStates = new Dictionary<string, bool>();
+        private Dictionary<string, bool> serverShutdownInitiated = new Dictionary<string, bool>();
 
         public Form1()
         {
@@ -247,11 +248,17 @@ namespace GameServerManager
                 return false; // Configuration not found for gameID
             }
 
-            DateTime now = DateTime.Now;
+            // Assuming 30 is an indicator of unset or invalid values,
+            // and setting some sensible defaults (e.g., midnight).
+            // Adjust these default values as necessary.
+            int defaultRestartHour = Properties.Settings.Default.RestartHour;
+            int defaultRestartMinute = Properties.Settings.Default.RestartMinute;
 
-            // Use the restart time from the config for the specific game/server
-            int restartHour = config.RestartHour;
-            int restartMinute = config.RestartMinute;
+            // Assigning config values or defaults
+            int restartHour = config.RestartHour != 30 ? config.RestartHour : defaultRestartHour;
+            int restartMinute = config.RestartMinute != 30 ? config.RestartMinute : defaultRestartMinute;
+
+            DateTime now = DateTime.Now;
 
             // Calculate the end minute and possibly adjust the end hour
             int endMinute = restartMinute + 5;
@@ -276,6 +283,7 @@ namespace GameServerManager
 
             return false; // Not time to restart
         }
+
         private bool AutoRestartEnabled(string gameID)
         {
             // Attempt to retrieve the game configuration for the given gameID
@@ -405,6 +413,8 @@ namespace GameServerManager
             {
                 try
                 {
+                    serverShutdownInitiated[gameID] = false;
+
                     var startInfo = new ProcessStartInfo
                     {
                         FileName = config.ServerExecutableFilename,
@@ -443,6 +453,14 @@ namespace GameServerManager
             if (gamesTabControl.SelectedTab?.Tag is GameConfig config)
             {
                 LogToTab(config.GameID, "Attempting to shut down");
+
+                if (serverShutdownInitiated.TryGetValue(gameID, out bool initiated) && initiated)
+                {
+                    // Shutdown has already been initiated, no need to proceed
+                    return;
+                }
+
+                serverShutdownInitiated[gameID] = true;
 
                 await Task.Run(async () =>
                 {
