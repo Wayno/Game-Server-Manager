@@ -32,13 +32,13 @@
             label5 = new Label();
             GameIDTextBox = new TextBox();
             label6 = new Label();
-            ExecutableDirTextBox = new TextBox();
+            executableDirTextBox = new TextBox();
             selectExecutableDirButton = new Button();
             label4 = new Label();
             ServerDirTextBox = new TextBox();
             selectServerDirButton = new Button();
             label3 = new Label();
-            ServerExeTextBox = new TextBox();
+            serverExeTextBox = new TextBox();
             selectServerExeButton = new Button();
             label2 = new Label();
             okButton = new Button();
@@ -97,13 +97,13 @@
             label6.TabIndex = 45;
             label6.Text = "Game ID";
             // 
-            // ExecutableDirTextBox
+            // executableDirTextBox
             // 
-            ExecutableDirTextBox.Location = new Point(92, 174);
-            ExecutableDirTextBox.Name = "ExecutableDirTextBox";
-            ExecutableDirTextBox.ReadOnly = true;
-            ExecutableDirTextBox.Size = new Size(494, 23);
-            ExecutableDirTextBox.TabIndex = 44;
+            executableDirTextBox.Location = new Point(92, 174);
+            executableDirTextBox.Name = "executableDirTextBox";
+            executableDirTextBox.ReadOnly = true;
+            executableDirTextBox.Size = new Size(494, 23);
+            executableDirTextBox.TabIndex = 44;
             // 
             // selectExecutableDirButton
             // 
@@ -113,6 +113,7 @@
             selectExecutableDirButton.TabIndex = 43;
             selectExecutableDirButton.Text = "Set Dir";
             selectExecutableDirButton.UseVisualStyleBackColor = true;
+            selectExecutableDirButton.Click += selectExecutableDirButton_Click;
             // 
             // label4
             // 
@@ -149,13 +150,13 @@
             label3.TabIndex = 39;
             label3.Text = "Set Server Dir";
             // 
-            // ServerExeTextBox
+            // serverExeTextBox
             // 
-            ServerExeTextBox.Location = new Point(92, 219);
-            ServerExeTextBox.Name = "ServerExeTextBox";
-            ServerExeTextBox.ReadOnly = true;
-            ServerExeTextBox.Size = new Size(494, 23);
-            ServerExeTextBox.TabIndex = 38;
+            serverExeTextBox.Location = new Point(92, 219);
+            serverExeTextBox.Name = "serverExeTextBox";
+            serverExeTextBox.ReadOnly = true;
+            serverExeTextBox.Size = new Size(494, 23);
+            serverExeTextBox.TabIndex = 38;
             // 
             // selectServerExeButton
             // 
@@ -385,13 +386,13 @@
             Controls.Add(label5);
             Controls.Add(GameIDTextBox);
             Controls.Add(label6);
-            Controls.Add(ExecutableDirTextBox);
+            Controls.Add(executableDirTextBox);
             Controls.Add(selectExecutableDirButton);
             Controls.Add(label4);
             Controls.Add(ServerDirTextBox);
             Controls.Add(selectServerDirButton);
             Controls.Add(label3);
-            Controls.Add(ServerExeTextBox);
+            Controls.Add(serverExeTextBox);
             Controls.Add(selectServerExeButton);
             Controls.Add(label2);
             Controls.Add(okButton);
@@ -408,13 +409,13 @@
         private Label label5;
         private TextBox GameIDTextBox;
         private Label label6;
-        private TextBox ExecutableDirTextBox;
+        private TextBox executableDirTextBox;
         private Button selectExecutableDirButton;
         private Label label4;
         private TextBox ServerDirTextBox;
         private Button selectServerDirButton;
         private Label label3;
-        private TextBox ServerExeTextBox;
+        private TextBox serverExeTextBox;
         private Button selectServerExeButton;
         private Label label2;
         private Button okButton;

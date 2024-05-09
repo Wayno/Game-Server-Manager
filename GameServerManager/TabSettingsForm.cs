@@ -57,8 +57,8 @@ namespace GameServerManager
                     TabNameTextBox.Text = currentGameConfig.Name;
                     ExtraArgsTextBox.Text = currentGameConfig.ExtraArgs;
                     ServerDirTextBox.Text = currentGameConfig.ServerDirectory;
-                    ExecutableDirTextBox.Text = currentGameConfig.ExecutableDir;
-                    ServerExeTextBox.Text = currentGameConfig.ServerExecutableFilename;
+                    executableDirTextBox.Text = currentGameConfig.ExecutableDir;
+                    serverExeTextBox.Text = currentGameConfig.ServerExecutableFilename;
                     CountDownTimerTextBox.Text = currentGameConfig.Countdown.ToString();
                     TextBoxIP.Text = currentGameConfig.rconIP;
                     TextBoxPort.Text = currentGameConfig.rconPort;
@@ -82,8 +82,8 @@ namespace GameServerManager
             TabNameTextBox.Text = config.Name;
             ExtraArgsTextBox.Text = config.ExtraArgs;
             ServerDirTextBox.Text = config.ServerDirectory;
-            ExecutableDirTextBox.Text = config.ExecutableDir;
-            ServerExeTextBox.Text = config.ServerExecutableFilename;
+            executableDirTextBox.Text = config.ExecutableDir;
+            serverExeTextBox.Text = config.ServerExecutableFilename;
             CountDownTimerTextBox.Text = config.Countdown.ToString();
             TextBoxIP.Text = config.rconIP;
             TextBoxPort.Text = config.rconPort;
@@ -102,8 +102,8 @@ namespace GameServerManager
             string TabName = TabNameTextBox.Text;
             string extraArgs = ExtraArgsTextBox.Text;
             string serverDirectory = ServerDirTextBox.Text;
-            string executableDir = ExecutableDirTextBox.Text;
-            string serverExecutableFilename = ServerExeTextBox.Text;
+            string executableDir = executableDirTextBox.Text;
+            string serverExecutableFilename = serverExeTextBox.Text;
             string countdownText = CountDownTimerTextBox.Text;
             string rconIP = TextBoxIP.Text;
             string rconPort = TextBoxPort.Text;
@@ -113,7 +113,7 @@ namespace GameServerManager
             string hours = hoursComboBox.Text;
 
 
-            if (int.TryParse(countdownText, out int countdownValue) && 
+            if (int.TryParse(countdownText, out int countdownValue) &&
                 int.TryParse(minutesComboBox.Text, out int minutesValue) &&
                 int.TryParse(hoursComboBox.Text, out int hoursValue))
             {
@@ -277,6 +277,53 @@ namespace GameServerManager
             for (int minute = 0; minute < 60; minute++)
             {
                 minutesComboBox.Items.Add(minute.ToString("D2")); // Formats the minute as a two-digit number
+            }
+        }
+
+        private void selectExecutableDirButton_Click(object sender, EventArgs e)
+        {
+            using (var folderBrowserDialog = new FolderBrowserDialog())
+            {
+                folderBrowserDialog.Description = "Select the Server Directory To Install Too";
+
+                if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string selectedFolderPath = folderBrowserDialog.SelectedPath;
+
+                    if (currentGameConfig != null)
+                    {
+                        currentGameConfig.ServerDirectory = selectedFolderPath;
+                        executableDirTextBox.Text = selectedFolderPath; // Update TextBox
+                    }
+                    else
+                    {
+                        MessageBox.Show("Game configuration is not initialized.");
+                    }
+                }
+            }
+        }
+
+        private void selectServerExeButton_Click(object sender, EventArgs e)
+        {
+            using (var openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "Executable files (*.exe)|*.exe";
+                openFileDialog.Title = "Select the Server Executable";
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string selectedFilePath = openFileDialog.FileName;
+
+                    if (currentGameConfig != null)
+                    {
+                        currentGameConfig.ServerExecutableFilename = selectedFilePath;
+                        serverExeTextBox.Text = selectedFilePath; // Update the TextBox with the file path
+                    }
+                    else
+                    {
+                        MessageBox.Show("Game configuration is not initialized.");
+                    }
+                }
             }
         }
     }

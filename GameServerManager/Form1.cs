@@ -10,9 +10,7 @@ namespace GameServerManager
     public partial class Form1 : Form
     {
         private int counter;
-        private bool UpdateCheck = false;
-        private bool Forcenextrun = false;
-        private bool is_server_running;
+        private bool is_server_running = false;
         private DebugForm debugForm;
         public readonly string encryptionKey = "MOS8cGhXtz2M5t0kfpJUINLaMKkDAjgq"; // Hardcode for now, when released move it to get the KEY from userdatabase for more security.
 
@@ -22,6 +20,8 @@ namespace GameServerManager
         private Dictionary<string, GameConfig> gameConfigs = new Dictionary<string, GameConfig>();
         private Dictionary<string, bool> timerRunningStates = new Dictionary<string, bool>();
         private Dictionary<string, bool> serverShutdownInitiated = new Dictionary<string, bool>();
+        private Dictionary<string, bool> updateChecks = new Dictionary<string, bool>();
+        private Dictionary<string, bool> forceNextRuns = new Dictionary<string, bool>();
 
         public Form1()
         {
@@ -124,8 +124,7 @@ namespace GameServerManager
 
                         LogToTab(config.GameID, $"Stopping main loop for game {config.GameID}");
                         timerRunningStates[config.GameID] = false;
-                        is_server_running = false;
-                        Forcenextrun = false;
+                        forceNextRuns[config.GameID] = false;
                         UpdateStartButtonOnSelectedTab("Start");
                     }
                 }
@@ -161,7 +160,7 @@ namespace GameServerManager
         {
             if (IsServerUpdateNeeded(gameID))
             {
-                PerformServerUpdate(gameID);
+                UpdateServer(gameID);
             }
             else
             {
@@ -171,17 +170,18 @@ namespace GameServerManager
 
         private bool IsServerUpdateNeeded(string gameID)
         {
-            return !IsServerRunning() && !UpdateCheck && !Forcenextrun;
-        }
-
-        private void PerformServerUpdate(string gameID)
-        {
-            LogToTab(gameID, "Server is not running, doing steamcmd stuff");
-            UpdateServer(gameID); // Check and update server when needed
+            // Ensure the gameID exists in the dictionary or assume false as default
+            bool updateCheck = updateChecks.ContainsKey(gameID) && updateChecks[gameID];
+            bool forceNextRun = forceNextRuns.ContainsKey(gameID) && forceNextRuns[gameID];
+            return !IsServerRunning() && !updateCheck && !forceNextRun;
         }
 
         private void LogServerStatus(string gameID)
         {
+            bool updateCheck = updateChecks.ContainsKey(gameID) ? updateChecks[gameID] : false;
+            bool forceNextRun = forceNextRuns.ContainsKey(gameID) ? forceNextRuns[gameID] : false;
+
+
             if (!IsServerRunning())
             {
                 UpdateCountdownForTab(gameID, 30);
@@ -196,12 +196,12 @@ namespace GameServerManager
             {
                 LogToTab(gameID, "Server is currently running.");
             }
-            else if (!UpdateCheck && !Forcenextrun)
+            else if (!updateCheck && !forceNextRun)
             {
                 LogToTab(gameID, "Server update check is in progress.");
                 CheckAndUpdateServer(gameID);
             }
-            else if (Forcenextrun && !UpdateCheck)
+            else if (forceNextRun && !updateCheck)
             {
                 StartServer(gameID);
             }
@@ -357,18 +357,23 @@ namespace GameServerManager
             LogToTab(gameID, $"Is Server Running failed to get gameID: {gameID}");
             return false;
     }*/
-    private void UpdateServer(string gameID)
+    public void UpdateServer(string gameID)
         {
-            if (gamesTabControl.SelectedTab?.Tag is GameConfig config && !UpdateCheck)
+            bool updateCheck = updateChecks.ContainsKey(gameID) ? updateChecks[gameID] : false;
+            bool forceNextRun = forceNextRuns.ContainsKey(gameID) ? forceNextRuns[gameID] : false;
+
+            if (gamesTabControl.SelectedTab?.Tag is GameConfig config && !updateCheck)
             {
                 LogToTab(config.GameID, "Checking for server update...");
 
                 Task.Run(() =>
                 {
-                    UpdateCheck = true;
+                    updateChecks[gameID] = true;
 
                     string steamCmdPath = Path.Combine(Settings.Default.SteamCMDDirectory, "steamcmd.exe");
                     string arguments = $"+force_install_dir \"{config.ServerDirectory}\" +login anonymous +app_update {config.GameID} validate +quit";
+
+                    //LogToTab(config.GameID, $"{steamCmdPath}, {arguments}");
 
                     var process = Process.Start(steamCmdPath, arguments);
 
@@ -383,8 +388,8 @@ namespace GameServerManager
                             // Update UI here based on exitCode
                         });
 
-                        UpdateCheck = false; // Reset the flag after the process completes
-                        Forcenextrun = true;
+                        updateChecks[gameID] = false; // Reset the flag after the process completes
+                        forceNextRuns[gameID] = true;
                     }
                     else
                     {
@@ -392,11 +397,11 @@ namespace GameServerManager
                         {
                             LogToTab(config.GameID, "Failed to start the update process.");
                         });
-                        UpdateCheck = false; // Reset the flag if the process couldn't start
+                        updateChecks[gameID] = false; // Reset the flag if the process couldn't start
                     }
                 });
             }
-            else if (UpdateCheck)
+            else if (updateCheck)
             {
                 LogToTab(gameID, "An update is already in progress.");
             }
@@ -433,7 +438,7 @@ namespace GameServerManager
                             // The process has started, but you might want to wait for the server to be ready.
                             // Consider implementing a check to confirm the server is fully operational.
                             LogToTab(config.GameID, "Server process started successfully.");
-                            UpdateCheck = false;  // Set UpdateCheck to false as the server has started
+                            updateChecks[gameID] = false;  // Set UpdateCheck to false as the server has started
                         }
                     }
                 }
@@ -538,6 +543,22 @@ namespace GameServerManager
             }
         }
 
+        private void ForceUpdate(string gameID)
+        {
+            if (gamesTabControl.SelectedTab?.Tag is GameConfig config)
+            {
+                updateChecks[gameID] = false; // Reset the flag after the process completes
+                forceNextRuns[gameID] = false;
+                LogToTab(config.GameID, "Making sure game isnt running");
+
+                if (IsServerRunning())
+                {
+                    ShutdownServer(gameID);
+                }
+
+                UpdateServer(gameID);
+            }
+        }
 
         private void ExecuteCommand(string command)
         {
@@ -706,6 +727,19 @@ namespace GameServerManager
 
             tabPage.Controls.Add(Shutdown_Button);
 
+            //ForceUpdate_Button
+            var ForceUpdate_Button = new Button
+            {
+                Text = "Force Update",
+                Name = $"ForceUpdate{config.GameID}", // Unique name for each button
+                Location = new Point(187, 9), // Set location as needed
+                AutoSize = true, // Enable auto-sizing
+            };
+
+            ForceUpdate_Button.Click += (sender, e) => ForceUpdate(config.GameID);
+
+            tabPage.Controls.Add(ForceUpdate_Button);
+
             //TabSettings_Button
             var TabSettings = new Button
             {
@@ -742,8 +776,11 @@ namespace GameServerManager
             };
             tabPage.Controls.Add(logRichTextBox);
 
-            //Leave at end
+            // Leave at end: Add the new tab page to the TabControl
             gamesTabControl.TabPages.Add(tabPage);
+
+            // Automatically select the newly added tab page
+            gamesTabControl.SelectedTab = tabPage;
 
         }
         public class TabData

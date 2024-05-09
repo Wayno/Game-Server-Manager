@@ -17,7 +17,6 @@ namespace GameServerManager
             this.FormClosing += new FormClosingEventHandler(AddGame_FormClosing);
             this.parentForm = parent;
             this.gameIDTextBox.KeyPress += gameIDTextBox_KeyPress;
-            this.CountDownTimerTextBox.KeyPress += CountDownTimerTextBox_KeyPress;
 
             this.currentGameConfig = config ?? new GameConfig
             {
@@ -61,45 +60,41 @@ namespace GameServerManager
             parentForm.UpdateButtonStateBasedOnGameID();
         }
 
+        private async void ExecuteAfterDelayAsync(int delayMilliseconds, Action action)
+        {
+            await Task.Delay(delayMilliseconds);
+            action();
+        }
+
         private void okButton_Click_1(object sender, EventArgs e)
         {
             // Validate that all input fields are filled in
             if (string.IsNullOrWhiteSpace(gameIDTextBox.Text) ||
                 string.IsNullOrWhiteSpace(TabNameTextBox.Text) ||
-                string.IsNullOrWhiteSpace(serverExeTextBox.Text) ||
-                string.IsNullOrWhiteSpace(serverDirTextBox.Text) ||
-                string.IsNullOrWhiteSpace(executableDirTextBox.Text) ||
-                string.IsNullOrWhiteSpace(CountDownTimerTextBox.Text))
+                string.IsNullOrWhiteSpace(serverDirTextBox.Text))
             {
                 MessageBox.Show("Please fill in all fields.");
                 return; // Exit the method and do not proceed further
             }
 
-            if (int.TryParse(CountDownTimerTextBox.Text, out int countdownValue))
-            {
+
                 // Update currentGameConfig with the values from the input fields
                 if (currentGameConfig != null)
                 {
                     currentGameConfig.GameID = gameIDTextBox.Text;
                     currentGameConfig.Name = TabNameTextBox.Text;
-                    currentGameConfig.ServerExecutableFilename = serverExeTextBox.Text;
                     currentGameConfig.ServerDirectory = serverDirTextBox.Text;
-                    currentGameConfig.ExecutableDir = executableDirTextBox.Text;
-                    currentGameConfig.ExtraArgs = extraARgsTextBox.Text;
-                    currentGameConfig.Countdown = countdownValue;
                 }
 
                 // Save the updated configuration
                 GameConfigManager.SaveGameConfig(currentGameConfig);
 
-                parentForm.AddGameTab(currentGameConfig);
-                DialogResult = DialogResult.OK;
-                Close();
-            }
-            else
-            {
-                MessageBox.Show("Please enter a valid integer for the countdown.");
-            }
+            parentForm.AddGameTab(currentGameConfig);
+            DialogResult = DialogResult.OK;
+            Close();
+
+            ExecuteAfterDelayAsync(3000, () => parentForm.UpdateServer(gameIDTextBox.Text));
+
         }
 
 
@@ -117,53 +112,6 @@ namespace GameServerManager
                     {
                         currentGameConfig.ServerDirectory = selectedFolderPath;
                         serverDirTextBox.Text = selectedFolderPath; // Update TextBox
-                    }
-                    else
-                    {
-                        MessageBox.Show("Game configuration is not initialized.");
-                    }
-                }
-            }
-        }
-
-        private void selectExecutableDirButton_Click(object sender, EventArgs e)
-        {
-            using (var folderBrowserDialog = new FolderBrowserDialog())
-            {
-                folderBrowserDialog.Description = "Select the Server Directory To Install Too";
-
-                if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
-                {
-                    string selectedFolderPath = folderBrowserDialog.SelectedPath;
-
-                    if (currentGameConfig != null)
-                    {
-                        currentGameConfig.ServerDirectory = selectedFolderPath;
-                        executableDirTextBox.Text = selectedFolderPath; // Update TextBox
-                    }
-                    else
-                    {
-                        MessageBox.Show("Game configuration is not initialized.");
-                    }
-                }
-            }
-        }
-
-        private void selectServerExeButton_Click(object sender, EventArgs e)
-        {
-            using (var openFileDialog = new OpenFileDialog())
-            {
-                openFileDialog.Filter = "Executable files (*.exe)|*.exe";
-                openFileDialog.Title = "Select the Server Executable";
-
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    string selectedFilePath = openFileDialog.FileName;
-
-                    if (currentGameConfig != null)
-                    {
-                        currentGameConfig.ServerExecutableFilename = selectedFilePath;
-                        serverExeTextBox.Text = selectedFilePath; // Update the TextBox with the file path
                     }
                     else
                     {
