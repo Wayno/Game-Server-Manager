@@ -78,15 +78,41 @@ namespace GameServerManager
                 {
                     gameConfigsDictionary.Add(config.GameID, config);
                 }
-                else
-                {
-                    // Handle the case where duplicate GameID might exist or decide how you want to deal with it
-                    // For example, you might log a warning or overwrite the existing entry
-                }
             }
 
             return gameConfigsDictionary;
         }
+        public void updateloadedconfig(object? sender, EventArgs e)
+        {
+            // Load all configurations using the GameConfigManager
+            var loadedConfigs = GameConfigManager.LoadAllGameConfigs();
+
+            // Clear existing tabs and associated data structures
+            gamesTabControl.TabPages.Clear();
+            tabTimers.Clear();
+            timers.Clear();
+            tabCountdowns.Clear();
+            gameConfigs.Clear();
+            timerRunningStates.Clear();
+            serverShutdownInitiated.Clear();
+            updateChecks.Clear();
+            forceNextRuns.Clear();
+
+            // Reload the configurations into the dictionaries
+            foreach (var config in loadedConfigs)
+            {
+                AddGameTab(config); // Re-add the tabs for each configuration
+                gameConfigs[config.GameID] = config;
+            }
+
+            // Reset the selected tab to the first one (if available)
+            if (gamesTabControl.TabPages.Count > 0)
+            {
+                gamesTabControl.SelectedTab = gamesTabControl.TabPages[0];
+            }
+        }
+
+
         private void Start_Button_Click(object? sender, EventArgs e)
         {
             if (sender is Button button && button.Parent is TabPage tabPage && tabPage.Tag is GameConfig config)
@@ -679,12 +705,12 @@ namespace GameServerManager
             {
                 Name = $"tabPage{config.GameID}",
                 Text = config.Name,
-                Tag = config  // Storing the entire config object for later use
+                Tag = config // Storing the entire config object for later use
             };
 
-            var timer = new Timer();
-            timer.Interval = 1000; // 1 second
-            timer.Tick += (sender, e) => UpdateCountdown(config.GameID); // Assign the event handler to update countdown
+            // Timer setup
+            var timer = new Timer { Interval = 1000 }; // 1 second
+            timer.Tick += (sender, e) => UpdateCountdown(config.GameID);
 
             // Add the timer to the tabPage
             tabTimers[config.GameID] = timer;
@@ -693,96 +719,91 @@ namespace GameServerManager
             var deleteButton = new Button
             {
                 Text = "Delete Tab",
-                Location = new Point(450, 310), // Set location as needed
-                Size = new Size(50, 20) //Lenght, Heeght
+                Location = new Point(435, 310),
+                Size = new Size(70, 20)
             };
 
-            deleteButton.Click += deleteTabButton_Click; // Assign the event handler
+            deleteButton.Click += deleteTabButton_Click;
 
-            tabPage.Controls.Add(deleteButton);
-
-            //Start_Button
+            // Start Button
             var Start_Button = new Button
             {
-                Text = "Start Button",
-                Name = $"StartButton{config.GameID}", // Unique name for each button
-                Location = new Point(60, 9), // Set location as needed
-                Size = new Size(50, 25) //Lenght, Heeght
+                Text = "Start",
+                Name = $"StartButton{config.GameID}",
+                Location = new Point(60, 9),
+                Size = new Size(50, 25)
             };
 
-            Start_Button.Click += Start_Button_Click; // Assign the event handler
+            Start_Button.Click += Start_Button_Click;
 
-            tabPage.Controls.Add(Start_Button);
-
-            //Shutdown_Button
+            // Shutdown Button
             var Shutdown_Button = new Button
             {
-                Text = "Save && Exit",
-                Name = $"ShutdownButton{config.GameID}", // Unique name for each button
-                Location = new Point(110, 9), // Set location as needed
-                AutoSize = true, // Enable auto-sizing
+                Text = "Save & Exit",
+                Name = $"ShutdownButton{config.GameID}",
+                Location = new Point(110, 9),
+                Size = new Size(70, 25)
             };
 
             Shutdown_Button.Click += (sender, e) => SaveandExit(config.GameID);
 
-            tabPage.Controls.Add(Shutdown_Button);
-
-            //ForceUpdate_Button
+            // Force Update Button
             var ForceUpdate_Button = new Button
             {
                 Text = "Force Update",
-                Name = $"ForceUpdate{config.GameID}", // Unique name for each button
-                Location = new Point(187, 9), // Set location as needed
-                AutoSize = true, // Enable auto-sizing
+                Name = $"ForceUpdateButton{config.GameID}",
+                Location = new Point(187, 9),
+                Size = new Size(90, 25)
             };
 
             ForceUpdate_Button.Click += (sender, e) => ForceUpdate(config.GameID);
 
-            tabPage.Controls.Add(ForceUpdate_Button);
-
-            //TabSettings_Button
-            var TabSettings = new Button
+            // Tab Settings Button
+            var TabSettings_Button = new Button
             {
                 Text = "Settings",
-                Location = new Point(440, 10), // Set location as needed
-                Size = new Size(60, 25) //Lenght, Heeght
+                Location = new Point(440, 10),
+                Size = new Size(60, 25)
             };
 
-            TabSettings.Click += TabSettings_Click; // Assign the event handler
+            TabSettings_Button.Click += TabSettings_Click;
 
-            tabPage.Controls.Add(TabSettings);
-
-            //Countdown Textbox
+            // Countdown Textbox
             var Countdown = new TextBox
             {
                 Name = $"CountdownTextBox{config.GameID}",
-                //Text = $"{config.Countdown}", // Initialize with 60 or any valid integer value
-                Text = Settings.Default.Global_Timer.ToString(),
+                Text = config.Countdown.ToString(), // Convert Countdown integer to string
                 Location = new Point(10, 10),
-                Size = new Size(50, 20), //Lenght, Heeght
+                Size = new Size(50, 20),
                 ReadOnly = true
             };
 
-            tabPage.Controls.Add(Countdown);
-
-            //Log box
+            // Log RichTextBox
             var logRichTextBox = new RichTextBox
             {
                 Name = $"logRichTextBox{config.GameID}",
                 ReadOnly = true,
                 Location = new Point(10, 45),
-                Size = new Size(470, 260), //Lenght, Heeght
+                Size = new Size(470, 260),
                 Multiline = true
             };
+
+            // Add controls to the tabPage
+            tabPage.Controls.Add(deleteButton);
+            tabPage.Controls.Add(Start_Button);
+            tabPage.Controls.Add(Shutdown_Button);
+            tabPage.Controls.Add(ForceUpdate_Button);
+            tabPage.Controls.Add(TabSettings_Button);
+            tabPage.Controls.Add(Countdown);
             tabPage.Controls.Add(logRichTextBox);
 
-            // Leave at end: Add the new tab page to the TabControl
+            // Add the new tab page to the TabControl
             gamesTabControl.TabPages.Add(tabPage);
 
             // Automatically select the newly added tab page
             gamesTabControl.SelectedTab = tabPage;
-
         }
+
         public class TabData
         {
             public required System.Windows.Forms.Timer Timer { get; set; }

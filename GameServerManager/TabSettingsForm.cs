@@ -1,10 +1,10 @@
-﻿using static GameServerManager.Form1;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using System.Runtime.CompilerServices;
 using GameServerManager.Properties;
+using static GameServerManager.Form1;
 
 namespace GameServerManager
 {
@@ -12,7 +12,7 @@ namespace GameServerManager
     {
         private GameConfig currentGameConfig;
         private readonly string gameID;
-        public readonly string encryptionKey = "MOS8cGhXtz2M5t0kfpJUINLaMKkDAjgq"; // Hardcode for now, when released move it to get the KEY from userdatabase for more security.
+        public readonly string encryptionKey = "MOS8cGhXtz2M5t0kfpJUINLaMKkDAjgq"; // For testing only
 
         public TabSettingsForm(Form1 form1, string gameID)
         {
@@ -22,56 +22,18 @@ namespace GameServerManager
             MaskedTextBoxPasssword.UseSystemPasswordChar = true;
             btnShowPassword.Text = "Show"; // Initial text
 
-            // Populate hours
-            for (int i = 0; i < 24; i++)
-            {
-                hoursComboBox.Items.Add(i.ToString("D2"));
-            }
-
-            // Populate minutes
-            for (int i = 0; i < 60; i++)
-            {
-                minutesComboBox.Items.Add(i.ToString("D2"));
-            }
+            PopulateHours();
+            PopulateMinutes();
         }
 
         private void TabSettingsForm_Load(object sender, EventArgs e)
         {
-            // Read the updated game configurations from the file
             List<GameConfig> gameConfigs = GameConfigManager.LoadAllGameConfigs();
+            currentGameConfig = gameConfigs.FirstOrDefault(config => config.GameID == gameID);
 
-            // Get the selected game configuration
             if (currentGameConfig != null)
             {
-                // Find the matching configuration based on GameID
-                GameConfig selectedGameConfig = gameConfigs.FirstOrDefault(config => config.GameID == currentGameConfig.GameID);
-
-                if (selectedGameConfig != null)
-                {
-                    // Set the currentGameConfig to the selected configuration
-                    currentGameConfig = selectedGameConfig;
-                    string decryptedPassword = EncryptionHelper.DecryptString(encryptionKey, currentGameConfig.rconPassword);
-
-                    // Populate TextBox controls with the selected configuration's values
-                    GameIDTextBox.Text = currentGameConfig.GameID;
-                    TabNameTextBox.Text = currentGameConfig.Name;
-                    ExtraArgsTextBox.Text = currentGameConfig.ExtraArgs;
-                    ServerDirTextBox.Text = currentGameConfig.ServerDirectory;
-                    executableDirTextBox.Text = currentGameConfig.ExecutableDir;
-                    serverExeTextBox.Text = currentGameConfig.ServerExecutableFilename;
-                    CountDownTimerTextBox.Text = currentGameConfig.Countdown.ToString();
-                    TextBoxIP.Text = currentGameConfig.rconIP;
-                    TextBoxPort.Text = currentGameConfig.rconPort;
-                    MaskedTextBoxPasssword.Text = decryptedPassword;
-                    autoRestartCheckBox.Checked = currentGameConfig.AutoRestartEnabled;
-
-                    string selectedHour = currentGameConfig.RestartHour.ToString("D2");
-                    string selectedMinute = currentGameConfig.RestartMinute.ToString("D2");
-
-                    // Set the selected items in the ComboBoxes
-                    hoursComboBox.SelectedItem = selectedHour;
-                    minutesComboBox.SelectedItem = selectedMinute;
-                }
+                LoadGameConfig(currentGameConfig);
             }
         }
 
@@ -87,108 +49,139 @@ namespace GameServerManager
             CountDownTimerTextBox.Text = config.Countdown.ToString();
             TextBoxIP.Text = config.rconIP;
             TextBoxPort.Text = config.rconPort;
-            string decryptedPassword = EncryptionHelper.DecryptString(encryptionKey, config.rconPassword);
-            MaskedTextBoxPasssword.Text = decryptedPassword;
+            MaskedTextBoxPasssword.Text = EncryptionHelper.DecryptString(encryptionKey, config.rconPassword);
             autoRestartCheckBox.Checked = config.AutoRestartEnabled;
             minutesComboBox.Text = config.RestartMinute.ToString("D2");
             hoursComboBox.Text = config.RestartHour.ToString("D2");
-
-
         }
 
         private void okButton_Click(object sender, EventArgs e)
         {
-            string gameID = GameIDTextBox.Text;
-            string TabName = TabNameTextBox.Text;
-            string extraArgs = ExtraArgsTextBox.Text;
-            string serverDirectory = ServerDirTextBox.Text;
-            string executableDir = executableDirTextBox.Text;
-            string serverExecutableFilename = serverExeTextBox.Text;
-            string countdownText = CountDownTimerTextBox.Text;
-            string rconIP = TextBoxIP.Text;
-            string rconPort = TextBoxPort.Text;
-            string encryptedPassword = EncryptionHelper.EncryptString(encryptionKey, MaskedTextBoxPasssword.Text);
-            bool autorestartCheckBox = autoRestartCheckBox.Checked;
-            string minutes = minutesComboBox.Text;
-            string hours = hoursComboBox.Text;
-
-
-            if (int.TryParse(countdownText, out int countdownValue) &&
-                int.TryParse(minutesComboBox.Text, out int minutesValue) &&
-                int.TryParse(hoursComboBox.Text, out int hoursValue))
+            if (!int.TryParse(CountDownTimerTextBox.Text, out int countdownValue) ||
+                !int.TryParse(minutesComboBox.Text, out int minutesValue) ||
+                !int.TryParse(hoursComboBox.Text, out int hoursValue))
             {
-                // Load existing configurations
-                List<GameConfig> gameConfigs = GameConfigManager.LoadAllGameConfigs();
+                MessageBox.Show("Please enter valid integers for the countdown, hours, and minutes.");
+                return;
+            }
 
-                // Check if a configuration with the same GameID already exists
-                GameConfig existingConfig = gameConfigs.FirstOrDefault(config => config.GameID == gameID);
+            string encryptedPassword = EncryptionHelper.EncryptString(encryptionKey, MaskedTextBoxPasssword.Text);
 
-                if (existingConfig != null)
-                {
-                    // Update the existing configuration
-                    existingConfig.Name = TabName;
-                    existingConfig.ExtraArgs = extraArgs;
-                    existingConfig.ServerDirectory = serverDirectory;
-                    existingConfig.ExecutableDir = executableDir;
-                    existingConfig.ServerExecutableFilename = serverExecutableFilename;
-                    existingConfig.Countdown = countdownValue;
-                    existingConfig.rconIP = rconIP;
-                    existingConfig.rconPort = rconPort;
-                    existingConfig.Countdown = countdownValue;
-                    existingConfig.rconPassword = encryptedPassword;
-                    existingConfig.AutoRestartEnabled = autoRestartCheckBox.Checked;
-                    existingConfig.RestartHour = hoursValue;
-                    existingConfig.RestartMinute = minutesValue;
-                }
-                else
-                {
-                    // Create a new configuration
-                    GameConfig newConfig = new GameConfig
-                    {
-                        GameID = gameID,
-                        Name = TabName,
-                        ExtraArgs = extraArgs,
-                        ServerDirectory = serverDirectory,
-                        ExecutableDir = executableDir,
-                        ServerExecutableFilename = serverExecutableFilename,
-                        Countdown = countdownValue,
-                        rconIP = rconIP,
-                        rconPort = rconPort,
-                        rconPassword = encryptedPassword,
-                        AutoRestartEnabled = autoRestartCheckBox.Checked,
-                        RestartMinute = minutesValue,
-                        RestartHour = hoursValue
-                    };
+            GameConfig config = new GameConfig
+            {
+                GameID = GameIDTextBox.Text,
+                Name = TabNameTextBox.Text,
+                ExtraArgs = ExtraArgsTextBox.Text,
+                ServerDirectory = ServerDirTextBox.Text,
+                ExecutableDir = executableDirTextBox.Text,
+                ServerExecutableFilename = serverExeTextBox.Text,
+                Countdown = countdownValue,
+                rconIP = TextBoxIP.Text,
+                rconPort = TextBoxPort.Text,
+                rconPassword = encryptedPassword,
+                AutoRestartEnabled = autoRestartCheckBox.Checked,
+                RestartHour = hoursValue,
+                RestartMinute = minutesValue
+            };
 
-                    // Add the new configuration to the list
-                    gameConfigs.Add(newConfig);
-                }
+            List<GameConfig> gameConfigs = GameConfigManager.LoadAllGameConfigs();
+            GameConfig existingConfig = gameConfigs.FirstOrDefault(cfg => cfg.GameID == config.GameID);
 
-                // Save all configurations
-                GameConfigManager.SaveAllGameConfigs(gameConfigs);
-
-                // Close the form
-                DialogResult = DialogResult.OK;
-                Close();
+            if (existingConfig != null)
+            {
+                int index = gameConfigs.IndexOf(existingConfig);
+                gameConfigs[index] = config;
             }
             else
             {
-                // Handle the case when the input is not a valid integer for countdown
-                MessageBox.Show("Please enter a valid integer for the countdown.");
+                gameConfigs.Add(config);
+            }
+
+            GameConfigManager.SaveAllGameConfigs(gameConfigs);
+
+            var mainForm = Application.OpenForms.OfType<Form1>().FirstOrDefault();
+            mainForm?.updateloadedconfig(sender, e);
+
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+
+
+
+        private void btnShowPassword_Click_1(object sender, EventArgs e)
+        {
+            MaskedTextBoxPasssword.UseSystemPasswordChar = !MaskedTextBoxPasssword.UseSystemPasswordChar;
+            btnShowPassword.Text = MaskedTextBoxPasssword.UseSystemPasswordChar ? "Show" : "Hide";
+        }
+
+        private void PopulateHours()
+        {
+            hoursComboBox.Items.Clear();
+            for (int hour = 0; hour < 24; hour++)
+            {
+                hoursComboBox.Items.Add(hour.ToString("D2"));
             }
         }
 
-        private void btnShowPassword_Click(object sender, EventArgs e)
+        private void PopulateMinutes()
         {
+            minutesComboBox.Items.Clear();
+            for (int minute = 0; minute < 60; minute++)
+            {
+                minutesComboBox.Items.Add(minute.ToString("D2"));
+            }
+        }
 
+        private void selectExecutableDirButton_Click(object sender, EventArgs e)
+        {
+            using (var folderBrowserDialog = new FolderBrowserDialog())
+            {
+                folderBrowserDialog.Description = "Select the Server Directory To Install To";
+
+                if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+                {
+                    executableDirTextBox.Text = folderBrowserDialog.SelectedPath;
+
+                    if (currentGameConfig != null)
+                    {
+                        currentGameConfig.ServerDirectory = folderBrowserDialog.SelectedPath;
+                    }
+                    else
+                    {
+                        MessageBox.Show("Game configuration is not initialized.");
+                    }
+                }
+            }
+        }
+
+        private void selectServerExeButton_Click(object sender, EventArgs e)
+        {
+            using (var openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "Executable files (*.exe)|*.exe";
+                openFileDialog.Title = "Select the Server Executable";
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    serverExeTextBox.Text = openFileDialog.FileName;
+
+                    if (currentGameConfig != null)
+                    {
+                        currentGameConfig.ServerExecutableFilename = openFileDialog.FileName;
+                    }
+                    else
+                    {
+                        MessageBox.Show("Game configuration is not initialized.");
+                    }
+                }
+            }
         }
 
         public static class EncryptionHelper
         {
             public static string EncryptString(string key, string plainText)
             {
-                if (string.IsNullOrEmpty(plainText))
-                    return string.Empty;
+                if (string.IsNullOrEmpty(plainText)) return string.Empty;
 
                 byte[] iv = new byte[16];
                 byte[] array;
@@ -218,8 +211,7 @@ namespace GameServerManager
 
             public static string DecryptString(string key, string cipherText)
             {
-                if (string.IsNullOrEmpty(cipherText))
-                    return string.Empty;
+                if (string.IsNullOrEmpty(cipherText)) return string.Empty;
 
                 byte[] iv = new byte[16];
                 byte[] buffer = Convert.FromBase64String(cipherText);
@@ -239,89 +231,6 @@ namespace GameServerManager
                                 return streamReader.ReadToEnd();
                             }
                         }
-                    }
-                }
-            }
-        }
-
-        private void btnShowPassword_Click_1(object sender, EventArgs e)
-        {
-            // Toggle the UseSystemPasswordChar property
-            MaskedTextBoxPasssword.UseSystemPasswordChar = !MaskedTextBoxPasssword.UseSystemPasswordChar;
-
-            // Optionally, change the button's image or text to indicate the current state
-            if (MaskedTextBoxPasssword.UseSystemPasswordChar)
-            {
-                // If password is masked, show an "eye" icon or relevant text
-                btnShowPassword.Text = "Show"; // or set an "eye-closed" icon
-            }
-            else
-            {
-                // If password is visible, show an "eye-slash" icon or relevant text
-                btnShowPassword.Text = "Hide"; // or set an "eye" icon
-            }
-        }
-
-        private void PopulateHours()
-        {
-            hoursComboBox.Items.Clear();
-            for (int hour = 0; hour < 24; hour++)
-            {
-                hoursComboBox.Items.Add(hour.ToString("D2")); // Formats the hour as a two-digit number
-            }
-        }
-
-        private void PopulateMinutes()
-        {
-            minutesComboBox.Items.Clear();
-            for (int minute = 0; minute < 60; minute++)
-            {
-                minutesComboBox.Items.Add(minute.ToString("D2")); // Formats the minute as a two-digit number
-            }
-        }
-
-        private void selectExecutableDirButton_Click(object sender, EventArgs e)
-        {
-            using (var folderBrowserDialog = new FolderBrowserDialog())
-            {
-                folderBrowserDialog.Description = "Select the Server Directory To Install Too";
-
-                if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
-                {
-                    string selectedFolderPath = folderBrowserDialog.SelectedPath;
-
-                    if (currentGameConfig != null)
-                    {
-                        currentGameConfig.ServerDirectory = selectedFolderPath;
-                        executableDirTextBox.Text = selectedFolderPath; // Update TextBox
-                    }
-                    else
-                    {
-                        MessageBox.Show("Game configuration is not initialized.");
-                    }
-                }
-            }
-        }
-
-        private void selectServerExeButton_Click(object sender, EventArgs e)
-        {
-            using (var openFileDialog = new OpenFileDialog())
-            {
-                openFileDialog.Filter = "Executable files (*.exe)|*.exe";
-                openFileDialog.Title = "Select the Server Executable";
-
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    string selectedFilePath = openFileDialog.FileName;
-
-                    if (currentGameConfig != null)
-                    {
-                        currentGameConfig.ServerExecutableFilename = selectedFilePath;
-                        serverExeTextBox.Text = selectedFilePath; // Update the TextBox with the file path
-                    }
-                    else
-                    {
-                        MessageBox.Show("Game configuration is not initialized.");
                     }
                 }
             }

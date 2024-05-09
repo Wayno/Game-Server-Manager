@@ -166,6 +166,7 @@
             selectServerExeButton.TabIndex = 37;
             selectServerExeButton.Text = "Set Exe";
             selectServerExeButton.UseVisualStyleBackColor = true;
+            selectServerExeButton.Click += selectServerExeButton_Click;
             // 
             // label2
             // 

@@ -36,6 +36,7 @@
             okButton = new Button();
             TabNameTextBox = new TextBox();
             TabName = new Label();
+            richTextBox1 = new RichTextBox();
             SuspendLayout();
             // 
             // gameIDTextBox
@@ -107,11 +108,21 @@
             TabName.TabIndex = 53;
             TabName.Text = "Tab Name";
             // 
+            // richTextBox1
+            // 
+            richTextBox1.Location = new Point(65, 154);
+            richTextBox1.Name = "richTextBox1";
+            richTextBox1.ReadOnly = true;
+            richTextBox1.Size = new Size(330, 45);
+            richTextBox1.TabIndex = 55;
+            richTextBox1.Text = "ONCE CLICKED OK YOU MUST SELECT SETTING IN THE NEW TAB AND CONFIGURE THE REST OF THE GAME SETTINGS";
+            // 
             // AddGame
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(516, 186);
+            ClientSize = new Size(516, 242);
+            Controls.Add(richTextBox1);
             Controls.Add(TabNameTextBox);
             Controls.Add(TabName);
             Controls.Add(gameIDTextBox);
@@ -135,5 +146,6 @@
         private Button okButton;
         private TextBox TabNameTextBox;
         private Label TabName;
+        private RichTextBox richTextBox1;
     }
 }
